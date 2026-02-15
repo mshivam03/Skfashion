@@ -3,69 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skfashion | Premium Ready-Made Clothes</title>
+    <title>Skfashion | Premium Ready-Made Clothing</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .hero { background: #f8f9fa; padding: 60px 0; text-align: center; }
-        .product-card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; transition: 0.3s; }
-        .product-card:hover { shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .navbar-brand { font-weight: bold; letter-spacing: 2px; }
+        .product-card { border: none; transition: 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .product-img { height: 300px; object-fit: cover; border-radius: 8px 8px 0 0; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
             <a class="navbar-brand" href="#">SKFASHION</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#shop">Shop</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-                </ul>
-            </div>
         </div>
     </nav>
 
-    <div class="hero">
-        <h1>Welcome to Skfashion</h1>
-        <p>Your destination for high-quality ready-made clothing.</p>
-        <a href="#shop" class="btn btn-primary btn-lg">Explore Collection</a>
+    <div class="container my-5">
+        <h2 class="text-center mb-5">Our Latest Collection</h2>
+        <div class="row" id="shop-list">
+            </div>
     </div>
 
-    <div class="container my-5" id="shop">
-        <h2 class="text-center mb-4">Our Latest Collection</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="product-card text-center">
-                    <img src="https://via.placeholder.com/300" class="img-fluid mb-3" alt="Shirt">
-                    <h5>Classic Cotton Shirt</h5>
-                    <p class="text-muted">₹999</p>
-                    <button class="btn btn-outline-dark" onclick="buyNow('Classic Cotton Shirt', 999)">Buy on WhatsApp</button>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="product-card text-center">
-                    <img src="https://via.placeholder.com/300" class="img-fluid mb-3" alt="Jeans">
-                    <h5>Denim Slim Fit</h5>
-                    <p class="text-muted">₹1499</p>
-                    <button class="btn btn-outline-dark" onclick="buyNow('Denim Slim Fit', 1499)">Buy on WhatsApp</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <script>
-        function buyNow(productName, price) {
-            // Replace with your real WhatsApp number
-            const phoneNumber = "91XXXXXXXXXX"; 
-            const message = `Hi Skfashion! I want to buy the ${productName} for ₹${price}. Is it available?`;
-            window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
+            authDomain: "skfashion-a7760.firebaseapp.com",
+            projectId: "skfashion-a7760",
+            appId: "1:651545993736:web:45a567bbd87b174e7c67bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
+            let html = "";
+            snap.forEach(doc => {
+                const p = doc.data();
+                html += `
+                    <div class="col-md-4 mb-4">
+                        <div class="card product-card">
+                            <img src="${p.image}" class="product-img">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">${p.name}</h5>
+                                <p class="text-primary fw-bold">₹${p.price}</p>
+                                <button class="btn btn-dark w-100" onclick="order('${p.name}', ${p.price})">Buy on WhatsApp</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            document.getElementById('shop-list').innerHTML = html;
+        });
+
+        function order(name, price) {
+            const phone = "91XXXXXXXXXX"; // Put your phone number here
+            const text = `Hello Skfashion! I want to order ${name} for ₹${price}.`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
