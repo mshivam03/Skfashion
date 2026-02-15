@@ -2,25 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Skfashion Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skfashion Admin | Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --gold: #c5a059; --dark: #1a1a1a; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .admin-header { background: var(--dark); color: white; padding: 20px 0; border-bottom: 3px solid var(--gold); }
+        .upload-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
+        .btn-upload { background: var(--dark); color: white; border: 1px solid var(--gold); transition: 0.3s; }
+        .btn-upload:hover { background: var(--gold); color: white; }
+        .inventory-img { height: 80px; width: 80px; object-fit: cover; border-radius: 8px; }
+    </style>
 </head>
-<body class="bg-light p-5">
-    <div class="container" style="max-width: 500px;">
-        <div class="card p-4 shadow">
-            <h3>Upload Product</h3>
-            <input type="text" id="pName" class="form-control mb-2" placeholder="Product Name">
-            <input type="number" id="pPrice" class="form-control mb-2" placeholder="Price">
-            <input type="file" id="pImage" class="form-control mb-3">
-            <button class="btn btn-primary w-100" onclick="upload()">Add to Shop</button>
-            <div id="status" class="mt-3 text-center"></div>
+<body>
+
+    <script>
+        if(sessionStorage.getItem("admin") !== "true") { 
+            window.location.href = "login.html"; 
+        }
+    </script>
+
+    <header class="admin-header mb-5 text-center">
+        <h1>SK<span style="color:var(--gold)">FASHION</span> ADMIN</h1>
+        <p class="small text-uppercase tracking-widest">Inventory Management System</p>
+    </header>
+
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-5">
+                <div class="card upload-card p-4">
+                    <h4 class="mb-4 fw-bold">Add New Merchandise</h4>
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Product Name</label>
+                        <input type="text" id="pName" class="form-control" placeholder="e.g. Slim Fit Linen Shirt">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Price (INR)</label>
+                        <input type="number" id="pPrice" class="form-control" placeholder="e.g. 1299">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Category</label>
+                        <select id="pCategory" class="form-select">
+                            <option value="Shirts">Shirts</option>
+                            <option value="Pants">Pants</option>
+                            <option value="Suits">Suits</option>
+                            <option value="Traditional">Traditional Wear</option>
+                            <option value="Accessories">Accessories</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Product Image</label>
+                        <input type="file" id="pImage" class="form-control">
+                    </div>
+
+                    <button class="btn btn-upload w-100 py-2 fw-bold" onclick="uploadToCloud()">
+                        🚀 PUBLISH PRODUCT
+                    </button>
+
+                    <div id="status" class="mt-3 text-center small fw-bold"></div>
+                </div>
+                
+                <button class="btn btn-link text-muted mt-3 w-100" onclick="logout()">Logout Admin Session</button>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card upload-card p-4">
+                    <h4 class="mb-4 fw-bold">Live Inventory</h4>
+                    <div id="inventory-list" class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Details</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-body">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <hr>
-        <div id="admin-list" class="row mt-4"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
@@ -31,43 +104,91 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function upload() {
+        async function uploadToCloud() {
             const name = document.getElementById('pName').value;
             const price = document.getElementById('pPrice').value;
+            const category = document.getElementById('pCategory').value;
             const file = document.getElementById('pImage').files[0];
             const status = document.getElementById('status');
 
-            status.innerHTML = "Processing...";
-            const data = new FormData();
-            data.append('file', file);
-            data.append('upload_preset', 'unsigned_preset_123');
+            if(!name || !price || !file) {
+                status.innerHTML = "❌ Please fill all fields!";
+                status.style.color = "red";
+                return;
+            }
+
+            status.innerHTML = "⏳ Processing image...";
+            status.style.color = "blue";
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'unsigned_preset_123');
 
             try {
-                const res = await fetch('https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload', {
-                    method: 'POST', body: data
+                // Upload to Cloudinary
+                const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload', {
+                    method: 'POST',
+                    body: formData
                 });
-                const json = await res.json();
-                
+                const cloudData = await cloudRes.json();
+                const imgUrl = cloudData.secure_url;
+
+                status.innerHTML = "⏳ Saving to Database...";
+
+                // Save to Firebase Firestore
                 await db.collection("products").add({
-                    name: name, price: price, image: json.secure_url,
+                    name: name,
+                    price: price,
+                    category: category,
+                    image: imgUrl,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                status.innerHTML = "✅ Uploaded!";
-            } catch (e) { status.innerHTML = "❌ Error!"; }
+
+                status.innerHTML = "✅ SUCCESS: Product is Live!";
+                status.style.color = "green";
+                
+                // Reset form
+                document.getElementById('pName').value = "";
+                document.getElementById('pPrice').value = "";
+                document.getElementById('pImage').value = "";
+
+            } catch (err) {
+                status.innerHTML = "❌ Error: " + err.message;
+            }
         }
 
-        db.collection("products").onSnapshot(snap => {
-            let h = "";
+        // Real-time Inventory Display
+        db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
+            let rows = "";
             snap.forEach(doc => {
-                h += `<div class="col-6 mb-2">
-                    <img src="${doc.data().image}" style="width:100%">
-                    <button class="btn btn-danger btn-sm w-100" onclick="del('${doc.id}')">Delete</button>
-                </div>`;
+                const p = doc.data();
+                rows += `
+                <tr>
+                    <td><img src="${p.image}" class="inventory-img"></td>
+                    <td>
+                        <div class="fw-bold">${p.name}</div>
+                        <div class="small text-muted">${p.category} | ₹${p.price}</div>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline-danger btn-sm" onclick="removeItem('${doc.id}')">
+                            Delete
+                        </button>
+                    </td>
+                </tr>`;
             });
-            document.getElementById('admin-list').innerHTML = h;
+            document.getElementById('inventory-body').innerHTML = rows;
         });
 
-        async function del(id) { if(confirm("Delete?")) await db.collection("products").doc(id).delete(); }
+        async function removeItem(id) {
+            if(confirm("Confirm: Delete this product from Skfashion?")) {
+                await db.collection("products").doc(id).delete();
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        }
     </script>
 </body>
 </html>
