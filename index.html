@@ -3,31 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skfashion | Premium Ready-Made Clothing</title>
+    <title>Skfashion | Premium Men's Wear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .navbar-brand { font-weight: bold; letter-spacing: 2px; }
-        .product-card { border: none; transition: 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .product-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        .product-img { height: 300px; object-fit: cover; border-radius: 8px 8px 0 0; }
+        :root { --gold: #c5a059; --dark: #1a1a1a; }
+        body { font-family: 'Poppins', sans-serif; background: #fdfdfd; }
+        .navbar { background: var(--dark); border-bottom: 2px solid var(--gold); }
+        .hero-section { background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?auto=format&fit=crop&w=1350&q=80'); height: 60vh; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        .btn-gold { background: var(--gold); color: white; border: none; padding: 10px 25px; transition: 0.3s; }
+        .btn-gold:hover { background: #ab8a4a; transform: scale(1.05); }
+        .product-card { border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s; height: 100%; }
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .product-img { height: 350px; object-fit: cover; }
+        .category-badge { background: #eee; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; text-transform: uppercase; color: #666; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="#">SKFASHION</a>
+            <a class="navbar-brand fw-bold fs-3" href="#">SK<span style="color:var(--gold)">FASHION</span></a>
+            <div class="ms-auto text-light">
+                <a href="login.html" class="text-light text-decoration-none"><i class="fa fa-user-shield"></i> Admin Login</a>
+            </div>
         </div>
     </nav>
 
-    <div class="container my-5">
-        <h2 class="text-center mb-5">Our Latest Collection</h2>
-        <div class="row" id="shop-list">
+    <div class="hero-section">
+        <div>
+            <h1 class="display-3 fw-bold">ELEVATE YOUR STYLE</h1>
+            <p class="lead">Premium Ready-Made Collection for Men</p>
+            <a href="#collection" class="btn btn-gold fs-5">Shop Now</a>
+        </div>
+    </div>
+
+    <div class="container my-5" id="collection">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2 class="fw-bold">Our Collection</h2>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">Filter Category</button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="filterItems('all')">All</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="filterItems('Shirts')">Shirts</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="filterItems('Pants')">Pants</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="filterItems('Suits')">Suits</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="row g-4" id="product-container">
             </div>
     </div>
 
+    <footer class="bg-dark text-white py-5 text-center">
+        <p>&copy; 2026 Skfashion. High-Quality Menswear.</p>
+        <p><i class="fab fa-whatsapp text-success"></i> +91 8544551126</p>
+    </footer>
+
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -39,30 +75,42 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
-            let html = "";
-            snap.forEach(doc => {
-                const p = doc.data();
-                html += `
-                    <div class="col-md-4 mb-4">
-                        <div class="card product-card">
-                            <img src="${p.image}" class="product-img">
-                            <div class="card-body text-center">
-                                <h5 class="card-title">${p.name}</h5>
-                                <p class="text-primary fw-bold">₹${p.price}</p>
-                                <button class="btn btn-dark w-100" onclick="order('${p.name}', ${p.price})">Buy on WhatsApp</button>
+        function loadProducts(category = 'all') {
+            let query = db.collection("products").orderBy("timestamp", "desc");
+            
+            query.onSnapshot(snap => {
+                let html = "";
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    if(category === 'all' || p.category === category) {
+                        html += `
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card product-card">
+                                <img src="${p.image}" class="product-img">
+                                <div class="card-body">
+                                    <span class="category-badge">${p.category || 'Menswear'}</span>
+                                    <h5 class="mt-2 fw-bold">${p.name}</h5>
+                                    <p class="text-gold fw-bold fs-5 mb-3">₹${p.price}</p>
+                                    <button class="btn btn-dark w-100 py-2" onclick="sendWhatsApp('${p.name}', ${p.price})">
+                                        <i class="fab fa-whatsapp me-2"></i>Order via WhatsApp
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
+                    }
+                });
+                document.getElementById('product-container').innerHTML = html;
             });
-            document.getElementById('shop-list').innerHTML = html;
-        });
-
-        function order(name, price) {
-            const phone = "91XXXXXXXXXX"; // Put your phone number here
-            const text = `Hello Skfashion! I want to order ${name} for ₹${price}.`;
-            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
+
+        function sendWhatsApp(name, price) {
+            const myNumber = "918544551126";
+            const message = `Hi Skfashion! I'm interested in buying: ${name} (Price: ₹${price}). Can you share more details?`;
+            window.open(`https://wa.me/${myNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        function filterItems(cat) { loadProducts(cat); }
+        loadProducts();
     </script>
 </body>
 </html>
