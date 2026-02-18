@@ -3,45 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skfashion Admin | Dashboard</title>
+    <title>Skfashion Admin | Premium Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --gold: #c5a059; --dark: #1a1a1a; }
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .admin-header { background: var(--dark); color: white; padding: 20px 0; border-bottom: 3px solid var(--gold); }
-        .upload-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
-        .btn-upload { background: var(--dark); color: white; border: 1px solid var(--gold); transition: 0.3s; }
+        .admin-header { background: var(--dark); color: white; padding: 25px 0; border-bottom: 3px solid var(--gold); }
+        .upload-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; height: 100%; }
+        .btn-upload { background: var(--dark); color: white; border: 1px solid var(--gold); transition: 0.3s; padding: 12px; }
         .btn-upload:hover { background: var(--gold); color: white; }
-        .inventory-img { height: 80px; width: 80px; object-fit: cover; border-radius: 8px; }
+        .inventory-img { height: 60px; width: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .status-msg { font-size: 0.9rem; padding: 10px; border-radius: 8px; display: none; }
     </style>
 </head>
 <body>
 
     <script>
-        if(sessionStorage.getItem("admin") !== "true") { 
-            window.location.href = "login.html"; 
-        }
+        if(sessionStorage.getItem("admin") !== "true") { window.location.href = "login.html"; }
     </script>
 
     <header class="admin-header mb-5 text-center">
         <h1>SK<span style="color:var(--gold)">FASHION</span> ADMIN</h1>
-        <p class="small text-uppercase tracking-widest">Inventory Management System</p>
+        <p class="small text-uppercase tracking-widest" style="letter-spacing: 2px;">Inventory & Digital Storefront</p>
     </header>
 
-    <div class="container">
+    <div class="container mb-5">
         <div class="row g-4">
             <div class="col-md-5">
                 <div class="card upload-card p-4">
-                    <h4 class="mb-4 fw-bold">Add New Merchandise</h4>
+                    <h4 class="mb-4 fw-bold">✨ Add New Merchandise</h4>
                     
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Product Name</label>
-                        <input type="text" id="pName" class="form-control" placeholder="e.g. Slim Fit Linen Shirt">
+                        <input type="text" id="pName" class="form-control" placeholder="e.g. Luxury Silk Suit">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Price (INR)</label>
-                        <input type="number" id="pPrice" class="form-control" placeholder="e.g. 1299">
+                        <input type="number" id="pPrice" class="form-control" placeholder="e.g. 2499">
                     </div>
 
                     <div class="mb-3">
@@ -57,29 +56,29 @@
 
                     <div class="mb-4">
                         <label class="form-label small fw-bold">Product Image</label>
-                        <input type="file" id="pImage" class="form-control">
+                        <input type="file" id="pImage" class="form-control" accept="image/*">
                     </div>
 
-                    <button class="btn btn-upload w-100 py-2 fw-bold" onclick="uploadToCloud()">
-                        🚀 PUBLISH PRODUCT
+                    <button id="publishBtn" class="btn btn-upload w-100 fw-bold" onclick="handleUpload()">
+                        🚀 PUBLISH TO STORE
                     </button>
 
-                    <div id="status" class="mt-3 text-center small fw-bold"></div>
+                    <div id="status" class="status-msg mt-3 text-center"></div>
                 </div>
                 
-                <button class="btn btn-link text-muted mt-3 w-100" onclick="logout()">Logout Admin Session</button>
+                <button class="btn btn-link text-muted mt-3 w-100" onclick="logout()">Logout Session</button>
             </div>
 
             <div class="col-md-7">
                 <div class="card upload-card p-4">
-                    <h4 class="mb-4 fw-bold">Live Inventory</h4>
+                    <h4 class="mb-4 fw-bold">📦 Live Inventory</h4>
                     <div id="inventory-list" class="table-responsive">
-                        <table class="table align-middle">
+                        <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Image</th>
+                                    <th>Product</th>
                                     <th>Details</th>
-                                    <th>Action</th>
+                                    <th class="text-end">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="inventory-body">
@@ -95,6 +94,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
 
     <script>
+        // CONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
             authDomain: "skfashion-a7760.firebaseapp.com",
@@ -104,83 +104,92 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function uploadToCloud() {
+        // CLOUDINARY SETTINGS
+        const CLOUD_URL = 'https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload';
+        const UPLOAD_PRESET = 'unsigned_preset_123'; // Make sure this is "Unsigned" in Cloudinary!
+
+        async function handleUpload() {
             const name = document.getElementById('pName').value;
             const price = document.getElementById('pPrice').value;
             const category = document.getElementById('pCategory').value;
             const file = document.getElementById('pImage').files[0];
             const status = document.getElementById('status');
+            const btn = document.getElementById('publishBtn');
 
             if(!name || !price || !file) {
-                status.innerHTML = "❌ Please fill all fields!";
-                status.style.color = "red";
+                showStatus("❌ Fill all fields!", "red");
                 return;
             }
 
-            status.innerHTML = "⏳ Processing image...";
-            status.style.color = "blue";
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'unsigned_preset_123');
+            // Start Loading
+            btn.disabled = true;
+            btn.innerText = "⏳ UPLOADING...";
+            showStatus("⏳ Processing image and data...", "blue");
 
             try {
-                // Upload to Cloudinary
-                const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                // 1. Upload Image to Cloudinary
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', UPLOAD_PRESET);
+
+                const cloudRes = await fetch(CLOUD_URL, { method: 'POST', body: formData });
                 const cloudData = await cloudRes.json();
-                const imgUrl = cloudData.secure_url;
+                
+                if(!cloudData.secure_url) throw new Error("Cloudinary upload failed");
 
-                status.innerHTML = "⏳ Saving to Database...";
-
-                // Save to Firebase Firestore
+                // 2. Save to Firestore
                 await db.collection("products").add({
-                    name: name,
-                    price: price,
-                    category: category,
-                    image: imgUrl,
+                    name,
+                    price: parseInt(price),
+                    category,
+                    image: cloudData.secure_url,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                status.innerHTML = "✅ SUCCESS: Product is Live!";
-                status.style.color = "green";
-                
-                // Reset form
+                showStatus("✅ Success! Product is live.", "green");
                 document.getElementById('pName').value = "";
                 document.getElementById('pPrice').value = "";
                 document.getElementById('pImage').value = "";
 
             } catch (err) {
-                status.innerHTML = "❌ Error: " + err.message;
+                showStatus("❌ Error: " + err.message, "red");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🚀 PUBLISH TO STORE";
             }
         }
 
-        // Real-time Inventory Display
+        function showStatus(msg, color) {
+            const status = document.getElementById('status');
+            status.style.display = "block";
+            status.style.color = color;
+            status.innerHTML = msg;
+        }
+
+        // Live Real-time Inventory Listener
         db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
-            let rows = "";
+            let html = "";
             snap.forEach(doc => {
                 const p = doc.data();
-                rows += `
+                html += `
                 <tr>
                     <td><img src="${p.image}" class="inventory-img"></td>
                     <td>
-                        <div class="fw-bold">${p.name}</div>
-                        <div class="small text-muted">${p.category} | ₹${p.price}</div>
+                        <div class="fw-bold text-dark">${p.name}</div>
+                        <div class="small text-muted">${p.category} • <span class="text-success fw-bold">₹${p.price}</span></div>
                     </td>
-                    <td>
-                        <button class="btn btn-outline-danger btn-sm" onclick="removeItem('${doc.id}')">
-                            Delete
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger border-0" onclick="removeItem('${doc.id}')">
+                            🗑️ Delete
                         </button>
                     </td>
                 </tr>`;
             });
-            document.getElementById('inventory-body').innerHTML = rows;
+            document.getElementById('inventory-body').innerHTML = html || "<tr><td colspan='3' class='text-center text-muted'>No products found.</td></tr>";
         });
 
         async function removeItem(id) {
-            if(confirm("Confirm: Delete this product from Skfashion?")) {
+            if(confirm("Are you sure you want to remove this item?")) {
                 await db.collection("products").doc(id).delete();
             }
         }
