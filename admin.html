@@ -3,201 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skfashion Admin | Premium Dashboard</title>
+    <title>Skfashion Admin | Pro Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root { --gold: #c5a059; --dark: #1a1a1a; }
         body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .admin-header { background: var(--dark); color: white; padding: 25px 0; border-bottom: 3px solid var(--gold); }
-        .upload-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; height: 100%; }
-        .btn-upload { background: var(--dark); color: white; border: 1px solid var(--gold); transition: 0.3s; padding: 12px; }
-        .btn-upload:hover { background: var(--gold); color: white; }
-        .inventory-img { height: 60px; width: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-        .status-msg { font-size: 0.9rem; padding: 10px; border-radius: 8px; display: none; }
+        .admin-header { background: var(--dark); color: white; padding: 20px 0; border-bottom: 4px solid var(--gold); }
+        .nav-tabs .nav-link { color: var(--dark); fw-bold; }
+        .nav-tabs .nav-link.active { border-bottom: 3px solid var(--gold); color: var(--gold); }
+        .card { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .btn-gold { background: var(--dark); color: white; border: 1px solid var(--gold); }
+        .btn-gold:hover { background: var(--gold); color: white; }
     </style>
 </head>
 <body>
 
-    <script>
-        if(sessionStorage.getItem("admin") !== "true") { window.location.href = "login.html"; }
-    </script>
+<header class="admin-header text-center mb-4">
+    <h1>SK<span style="color:var(--gold)">FASHION</span> ADMIN</h1>
+</header>
 
-    <header class="admin-header mb-5 text-center">
-        <h1>SK<span style="color:var(--gold)">FASHION</span> ADMIN</h1>
-        <p class="small text-uppercase tracking-widest" style="letter-spacing: 2px;">Inventory & Digital Storefront</p>
-    </header>
+<div class="container" id="mainContent" style="display:none;">
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#upload">Add Product</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#inventory">Live Inventory</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings">Settings (Password)</button>
+        </li>
+    </ul>
 
-    <div class="container mb-5">
-        <div class="row g-4">
-            <div class="col-md-5">
-                <div class="card upload-card p-4">
-                    <h4 class="mb-4 fw-bold">✨ Add New Merchandise</h4>
-                    
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Product Name</label>
-                        <input type="text" id="pName" class="form-control" placeholder="e.g. Luxury Silk Suit">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Price (INR)</label>
-                        <input type="number" id="pPrice" class="form-control" placeholder="e.g. 2499">
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Category</label>
-                        <select id="pCategory" class="form-select">
-                            <option value="Shirts">Shirts</option>
-                            <option value="Pants">Pants</option>
-                            <option value="Suits">Suits</option>
-                            <option value="Traditional">Traditional Wear</option>
-                            <option value="Accessories">Accessories</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold">Product Image</label>
-                        <input type="file" id="pImage" class="form-control" accept="image/*">
-                    </div>
-
-                    <button id="publishBtn" class="btn btn-upload w-100 fw-bold" onclick="handleUpload()">
-                        🚀 PUBLISH TO STORE
-                    </button>
-
-                    <div id="status" class="status-msg mt-3 text-center"></div>
-                </div>
-                
-                <button class="btn btn-link text-muted mt-3 w-100" onclick="logout()">Logout Session</button>
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="upload">
+            <div class="card p-4 mx-auto" style="max-width: 500px;">
+                <h4 class="fw-bold mb-3">Add Merchandise</h4>
+                <input type="text" id="pName" class="form-control mb-2" placeholder="Product Name">
+                <input type="number" id="pPrice" class="form-control mb-2" placeholder="Price (INR)">
+                <select id="pCategory" class="form-select mb-2">
+                    <option value="Shirts">Shirts</option>
+                    <option value="Suits">Suits</option>
+                    <option value="Traditional">Traditional</option>
+                </select>
+                <input type="file" id="pImage" class="form-control mb-3">
+                <button class="btn btn-gold w-100" onclick="processUpload()">Publish Product</button>
+                <div id="status" class="mt-2 text-center small fw-bold"></div>
             </div>
+        </div>
 
-            <div class="col-md-7">
-                <div class="card upload-card p-4">
-                    <h4 class="mb-4 fw-bold">📦 Live Inventory</h4>
-                    <div id="inventory-list" class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Details</th>
-                                    <th class="text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inventory-body">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
+        <div class="tab-pane fade" id="inventory">
+            <div class="card p-4">
+                <table class="table align-middle">
+                    <tbody id="inventory-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="settings">
+            <div class="card p-4 mx-auto" style="max-width: 400px;">
+                <h4 class="fw-bold mb-3">Change Admin Password</h4>
+                <input type="text" id="newPass" class="form-control mb-2" placeholder="Enter New Password">
+                <button class="btn btn-danger w-100" onclick="updatePassword()">Update Password</button>
+                <p class="text-muted small mt-2 text-center">Note: This will update the password in Firebase.</p>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        // CONFIGURATION
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
-            authDomain: "skfashion-a7760.firebaseapp.com",
-            projectId: "skfashion-a7760",
-            appId: "1:651545993736:web:45a567bbd87b174e7c67bd"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
+        authDomain: "skfashion-a7760.firebaseapp.com",
+        projectId: "skfashion-a7760",
+        appId: "1:651545993736:web:45a567bbd87b174e7c67bd"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        // CLOUDINARY SETTINGS
-        const CLOUD_URL = 'https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload';
-        const UPLOAD_PRESET = 'unsigned_preset_123'; // Make sure this is "Unsigned" in Cloudinary!
-
-        async function handleUpload() {
-            const name = document.getElementById('pName').value;
-            const price = document.getElementById('pPrice').value;
-            const category = document.getElementById('pCategory').value;
-            const file = document.getElementById('pImage').files[0];
-            const status = document.getElementById('status');
-            const btn = document.getElementById('publishBtn');
-
-            if(!name || !price || !file) {
-                showStatus("❌ Fill all fields!", "red");
-                return;
-            }
-
-            // Start Loading
-            btn.disabled = true;
-            btn.innerText = "⏳ UPLOADING...";
-            showStatus("⏳ Processing image and data...", "blue");
-
-            try {
-                // 1. Upload Image to Cloudinary
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-
-                const cloudRes = await fetch(CLOUD_URL, { method: 'POST', body: formData });
-                const cloudData = await cloudRes.json();
-                
-                if(!cloudData.secure_url) throw new Error("Cloudinary upload failed");
-
-                // 2. Save to Firestore
-                await db.collection("products").add({
-                    name,
-                    price: parseInt(price),
-                    category,
-                    image: cloudData.secure_url,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                showStatus("✅ Success! Product is live.", "green");
-                document.getElementById('pName').value = "";
-                document.getElementById('pPrice').value = "";
-                document.getElementById('pImage').value = "";
-
-            } catch (err) {
-                showStatus("❌ Error: " + err.message, "red");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "🚀 PUBLISH TO STORE";
+    // --- DYNAMIC PASSWORD CHECK ---
+    async function checkAccess() {
+        const doc = await db.collection("settings").doc("admin_config").get();
+        const correctPass = doc.exists ? doc.data().password : "12345678"; // Fallback
+        
+        if (sessionStorage.getItem("sk_verified") === "true") {
+            document.getElementById('mainContent').style.display = "block";
+        } else {
+            let attempt = prompt("Enter Admin Password:");
+            if (attempt === correctPass) {
+                sessionStorage.setItem("sk_verified", "true");
+                document.getElementById('mainContent').style.display = "block";
+            } else {
+                alert("Wrong Password!");
+                window.location.href = "index.html";
             }
         }
+    }
+    checkAccess();
 
-        function showStatus(msg, color) {
-            const status = document.getElementById('status');
-            status.style.display = "block";
-            status.style.color = color;
-            status.innerHTML = msg;
-        }
+    async function updatePassword() {
+        const newPass = document.getElementById('newPass').value;
+        if(newPass.length < 4) return alert("Password too short!");
+        
+        await db.collection("settings").doc("admin_config").set({ password: newPass });
+        alert("Password updated in Firebase! Use the new password next time.");
+        location.reload();
+    }
 
-        // Live Real-time Inventory Listener
-        db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
-            let html = "";
-            snap.forEach(doc => {
-                const p = doc.data();
-                html += `
-                <tr>
-                    <td><img src="${p.image}" class="inventory-img"></td>
-                    <td>
-                        <div class="fw-bold text-dark">${p.name}</div>
-                        <div class="small text-muted">${p.category} • <span class="text-success fw-bold">₹${p.price}</span></div>
-                    </td>
-                    <td class="text-end">
-                        <button class="btn btn-sm btn-outline-danger border-0" onclick="removeItem('${doc.id}')">
-                            🗑️ Delete
-                        </button>
-                    </td>
-                </tr>`;
+    // --- UPLOAD LOGIC ---
+    async function processUpload() {
+        const name = document.getElementById('pName').value;
+        const price = document.getElementById('pPrice').value;
+        const category = document.getElementById('pCategory').value;
+        const file = document.getElementById('pImage').files[0];
+        const status = document.getElementById('status');
+
+        if(!name || !price || !file) return alert("Fill all fields!");
+        
+        status.innerText = "⏳ Uploading...";
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'unsigned_preset_123');
+
+        try {
+            const res = await fetch('https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            await db.collection("products").add({
+                name, price: parseInt(price), category, image: data.secure_url,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
-            document.getElementById('inventory-body').innerHTML = html || "<tr><td colspan='3' class='text-center text-muted'>No products found.</td></tr>";
+            status.innerText = "✅ Success!";
+            location.reload();
+        } catch (e) { status.innerText = "❌ Error"; }
+    }
+
+    // --- INVENTORY LISTENER ---
+    db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
+        let html = "";
+        snap.forEach(doc => {
+            const p = doc.data();
+            html += `<tr>
+                <td><img src="${p.image}" style="width:50px; border-radius:5px;"></td>
+                <td><b>${p.name}</b><br><small>${p.category} | ₹${p.price}</small></td>
+                <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${doc.id}')">Delete</button></td>
+            </tr>`;
         });
+        document.getElementById('inventory-body').innerHTML = html;
+    });
 
-        async function removeItem(id) {
-            if(confirm("Are you sure you want to remove this item?")) {
-                await db.collection("products").doc(id).delete();
-            }
-        }
-
-        function logout() {
-            sessionStorage.clear();
-            window.location.href = "login.html";
-        }
-    </script>
+    async function deleteItem(id) {
+        if(confirm("Delete item?")) await db.collection("products").doc(id).delete();
+    }
+</script>
 </body>
 </html>
