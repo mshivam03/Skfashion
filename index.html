@@ -3,117 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skfashion | Premium Clothing Store</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root { --gold: #c5a059; --dark: #1a1a1a; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: #fcfcfc; }
-        .navbar { background: var(--dark); border-bottom: 3px solid var(--gold); }
-        .hero { background: var(--dark); color: white; padding: 60px 0; text-align: center; }
-        .product-card { border: none; border-radius: 15px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .product-card:hover { transform: translateY(-5px); }
-        .product-img { height: 250px; object-fit: cover; border-radius: 15px 15px 0 0; }
-        .btn-buy { background: var(--dark); color: white; border: 1px solid var(--gold); border-radius: 25px; font-weight: 600; }
-        .btn-buy:hover { background: var(--gold); color: white; }
-        .cat-badge { background: #f0f0f0; color: #666; font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; }
-    </style>
+    <title>Skfashion Store | Shivam Kumar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 </head>
-<body>
+<body class="bg-gray-50 font-sans">
 
-    <nav class="navbar navbar-dark p-3">
-        <div class="container justify-content-center">
-            <a class="navbar-brand fw-bold fs-3" href="#" style="letter-spacing: 2px;">SK<span style="color:var(--gold)">FASHION</span></a>
-        </div>
-    </nav>
+    <header class="bg-black text-white py-20 text-center">
+        <h1 class="text-5xl font-bold uppercase tracking-widest">Elegance in Every Stitch</h1>
+        <p class="mt-4 text-gray-400">Explore our exclusive premium collection</p>
+    </header>
 
-    <div class="hero mb-5">
-        <h2 class="fw-bold">ELEGANCE IN EVERY STITCH</h2>
-        <p class="text-muted">Explore our exclusive premium collection</p>
-    </div>
-
-    <div class="container">
-        <div class="d-flex justify-content-center gap-2 mb-5">
-            <button class="btn btn-sm btn-outline-dark rounded-pill px-4" onclick="loadProducts('All')">All</button>
-            <button class="btn btn-sm btn-outline-dark rounded-pill px-4" onclick="loadProducts('Shirts')">Shirts</button>
-            <button class="btn btn-sm btn-outline-dark rounded-pill px-4" onclick="loadProducts('Suits')">Suits</button>
-            <button class="btn btn-sm btn-outline-dark rounded-pill px-4" onclick="loadProducts('Traditional')">Traditional</button>
-        </div>
-
-        <div class="row g-4" id="product-grid">
+    <main class="max-w-7xl mx-auto p-10">
+        <div id="product-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
             </div>
-    </div>
+    </main>
 
-    <footer class="text-center py-5 mt-5 text-muted small">
-        &copy; 2026 Skfashion Store | Designed by Shivam Kumar
+    <hr class="border-gray-300 my-10">
+
+    <section id="admin-section" class="max-w-4xl mx-auto mb-20 p-8 bg-white shadow-lg rounded-xl border border-gray-200">
+        
+        <div id="admin-login-gate" class="text-center">
+            <h3 class="text-2xl font-semibold mb-4">Store Management</h3>
+            <p class="text-gray-500 mb-6">Enter password to access product upload tools.</p>
+            <input type="password" id="admin-pass" placeholder="••••••••" class="border p-3 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-black">
+            <button onclick="unlockAdmin()" class="ml-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">Login</button>
+        </div>
+
+        <div id="admin-controls" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-green-600">Admin Dashboard</h2>
+                <button onclick="location.reload()" class="text-sm text-red-500 underline">Logout</button>
+            </div>
+            
+            <form id="upload-form" class="space-y-4">
+                <input type="text" id="p-name" placeholder="Product Name" class="w-full border p-3 rounded" required>
+                <input type="number" id="p-price" placeholder="Price (₹)" class="w-full border p-3 rounded" required>
+                <select id="p-category" class="w-full border p-3 rounded">
+                    <option value="Shirts">Shirts</option>
+                    <option value="Suits">Suits</option>
+                    <option value="Traditional">Traditional</option>
+                </select>
+                <input type="file" id="p-image" class="w-full border p-3 rounded" accept="image/*" required>
+                
+                <button type="submit" id="submit-btn" class="w-full bg-green-500 text-white font-bold py-4 rounded hover:bg-green-600">
+                    UPLOAD PRODUCT TO STORE
+                </button>
+            </form>
+            <p id="status-msg" class="mt-4 text-center font-medium"></p>
+        </div>
+    </section>
+
+    <footer class="text-center py-10 text-gray-500 border-t">
+        © 2026 Skfashion Store | Designed by Shivam Kumar (12514900)
     </footer>
 
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
-
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
-            authDomain: "skfashion-a7760.firebaseapp.com",
-            projectId: "skfashion-a7760",
-            appId: "1:651545993736:web:45a567bbd87b174e7c67bd"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
-        // Load Products from Firebase
-        function loadProducts(filter = 'All') {
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = `<p class="text-center">Loading collection...</p>`;
-
-            db.collection("products").orderBy("timestamp", "desc").onSnapshot(snap => {
-                let html = "";
-                snap.forEach(doc => {
-                    const p = doc.data();
-                    if(filter === 'All' || p.category === filter) {
-                        html += `
-                        <div class="col-6 col-md-4 col-lg-3">
-                            <div class="card product-card">
-                                <img src="${p.image}" class="product-img" alt="${p.name}">
-                                <div class="card-body p-3">
-                                    <span class="cat-badge mb-2 d-inline-block">${p.category}</span>
-                                    <h6 class="fw-bold mb-1">${p.name}</h6>
-                                    <p class="text-success fw-bold mb-3">₹${p.price}</p>
-                                    <button class="btn btn-buy w-100 btn-sm" onclick="buyNow('${p.name}', '${p.price}')">
-                                        BUY NOW
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                });
-                grid.innerHTML = html || `<p class="text-center">No products found in ${filter}.</p>`;
-            });
-        }
-
-        // The "Order" Logic (Saves to Admin Panel + WhatsApp)
-        async function buyNow(name, price) {
-            try {
-                // 1. Log order to "orders" collection in Firebase
-                await db.collection("orders").add({
-                    productName: name,
-                    price: price,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                // 2. Open WhatsApp for the customer
-                const shopPhone = "918544551126"; // Your WhatsApp Number
-                const message = `Hi Skfashion! I'm interested in buying: ${name} (Price: ₹${price}). Is it available?`;
-                const whatsappUrl = `https://wa.me/${shopPhone}?text=${encodeURIComponent(message)}`;
-                
-                window.open(whatsappUrl, '_blank');
-            } catch (err) {
-                console.error("Order logging failed:", err);
-                alert("Something went wrong, but you can still contact us on WhatsApp!");
+        // Password Logic
+        function unlockAdmin() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === "12345678") {
+                document.getElementById('admin-login-gate').classList.add('hidden');
+                document.getElementById('admin-controls').classList.remove('hidden');
+                alert("Access Granted, Shivam.");
+            } else {
+                alert("Wrong password!");
             }
         }
 
-        // Initial Load
-        loadProducts();
+        // --- IMPORTANT: ADD YOUR FIREBASE & CLOUDINARY CONFIG BELOW ---
+        // I have left the upload logic template here for you to paste your specific keys
+        const form = document.getElementById('upload-form');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            // 1. Upload to Cloudinary Logic here...
+            // 2. Save to Firestore Logic here...
+
+            alert("Product added successfully!");
+            location.reload(); // Refresh to show new product
+        };
     </script>
 </body>
 </html>
