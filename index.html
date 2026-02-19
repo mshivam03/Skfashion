@@ -10,9 +10,9 @@
 </head>
 <body class="bg-gray-50 font-sans">
 
-    <header class="bg-black text-white py-20 text-center">
-        <h1 class="text-5xl font-bold uppercase tracking-widest">Elegance in Every Stitch</h1>
-        <p class="mt-4 text-gray-400">Explore our exclusive premium collection</p>
+    <header class="bg-black text-white py-16 text-center">
+        <h1 class="text-4xl font-bold tracking-widest">ELEGANCE IN EVERY STITCH</h1>
+        <p class="mt-2 text-gray-400">Premium Collection by Shivam Kumar</p>
     </header>
 
     <main class="max-w-7xl mx-auto p-10">
@@ -20,72 +20,112 @@
             </div>
     </main>
 
-    <hr class="border-gray-300 my-10">
-
-    <section id="admin-section" class="max-w-4xl mx-auto mb-20 p-8 bg-white shadow-lg rounded-xl border border-gray-200">
-        
+    <section class="max-w-4xl mx-auto my-20 p-8 bg-white shadow-xl rounded-2xl border border-gray-100">
         <div id="admin-login-gate" class="text-center">
-            <h3 class="text-2xl font-semibold mb-4">Store Management</h3>
-            <p class="text-gray-500 mb-6">Enter password to access product upload tools.</p>
-            <input type="password" id="admin-pass" placeholder="••••••••" class="border p-3 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-black">
-            <button onclick="unlockAdmin()" class="ml-2 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">Login</button>
+            <h3 class="text-xl font-bold mb-4">Admin Access</h3>
+            <input type="password" id="admin-pass" placeholder="Enter Password" class="border p-3 rounded-lg w-64 outline-none focus:ring-2 focus:ring-black">
+            <button onclick="unlockAdmin()" class="ml-2 bg-black text-white px-6 py-3 rounded-lg">Login</button>
         </div>
 
         <div id="admin-controls" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-green-600">Admin Dashboard</h2>
-                <button onclick="location.reload()" class="text-sm text-red-500 underline">Logout</button>
-            </div>
-            
+            <h2 class="text-2xl font-bold text-green-600 mb-6 text-center">Admin Panel - Add Product</h2>
             <form id="upload-form" class="space-y-4">
-                <input type="text" id="p-name" placeholder="Product Name" class="w-full border p-3 rounded" required>
-                <input type="number" id="p-price" placeholder="Price (₹)" class="w-full border p-3 rounded" required>
-                <select id="p-category" class="w-full border p-3 rounded">
+                <input type="text" id="p-name" placeholder="Product Name" class="w-full border p-4 rounded-xl" required>
+                <input type="number" id="p-price" placeholder="Price (₹)" class="w-full border p-4 rounded-xl" required>
+                <select id="p-category" class="w-full border p-4 rounded-xl">
                     <option value="Shirts">Shirts</option>
                     <option value="Suits">Suits</option>
                     <option value="Traditional">Traditional</option>
                 </select>
-                <input type="file" id="p-image" class="w-full border p-3 rounded" accept="image/*" required>
-                
-                <button type="submit" id="submit-btn" class="w-full bg-green-500 text-white font-bold py-4 rounded hover:bg-green-600">
-                    UPLOAD PRODUCT TO STORE
+                <input type="file" id="p-image" class="w-full border p-4 rounded-xl" accept="image/*" required>
+                <button type="submit" id="submit-btn" class="w-full bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-600 transition">
+                    UPLOAD TO STORE
                 </button>
             </form>
-            <p id="status-msg" class="mt-4 text-center font-medium"></p>
+            <button onclick="location.reload()" class="w-full mt-4 text-gray-400 text-sm italic">Logout & Lock</button>
         </div>
     </section>
 
-    <footer class="text-center py-10 text-gray-500 border-t">
-        © 2026 Skfashion Store | Designed by Shivam Kumar (12514900)
+    <footer class="text-center py-10 text-gray-400 border-t">
+        © 2026 Skfashion Store | RK25KNA13 | Shivam Kumar
     </footer>
 
     <script>
-        // Password Logic
+        // 1. YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXfUVyhD3IvriizZUYiKV528bjHd8G6I4",
+            authDomain: "skfashion-a7760.firebaseapp.com",
+            projectId: "skfashion-a7760",
+            appId: "1:651545993736:web:45a567bbd87b174e7c67bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 2. LOAD PRODUCTS
+        async function loadProducts() {
+            const container = document.getElementById('product-container');
+            const snapshot = await db.collection("products").orderBy("createdAt", "desc").get();
+            container.innerHTML = "";
+            snapshot.forEach(doc => {
+                const p = doc.data();
+                container.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <img src="${p.imageUrl}" class="w-full h-80 object-cover rounded-xl mb-4">
+                        <span class="text-xs text-gray-400 uppercase">${p.category}</span>
+                        <h3 class="text-lg font-bold">${p.name}</h3>
+                        <p class="text-green-600 font-bold">₹${p.price}</p>
+                        <button class="w-full mt-4 bg-black text-white py-2 rounded-lg">BUY NOW</button>
+                    </div>`;
+            });
+        }
+        loadProducts();
+
+        // 3. ADMIN UNLOCK
         function unlockAdmin() {
-            const pass = document.getElementById('admin-pass').value;
-            if (pass === "12345678") {
+            if (document.getElementById('admin-pass').value === "12345678") {
                 document.getElementById('admin-login-gate').classList.add('hidden');
                 document.getElementById('admin-controls').classList.remove('hidden');
-                alert("Access Granted, Shivam.");
-            } else {
-                alert("Wrong password!");
-            }
+            } else { alert("Incorrect Password"); }
         }
 
-        // --- IMPORTANT: ADD YOUR FIREBASE & CLOUDINARY CONFIG BELOW ---
-        // I have left the upload logic template here for you to paste your specific keys
+        // 4. UPLOAD LOGIC
         const form = document.getElementById('upload-form');
         form.onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
-            btn.innerText = "Uploading...";
+            btn.innerText = "Uploading to Cloud...";
             btn.disabled = true;
 
-            // 1. Upload to Cloudinary Logic here...
-            // 2. Save to Firestore Logic here...
+            const file = document.getElementById('p-image').files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'unsigned_preset_123'); // Your Preset
 
-            alert("Product added successfully!");
-            location.reload(); // Refresh to show new product
+            try {
+                // Upload to Cloudinary (Your Cloud Name: dfue7hk4j)
+                const res = await fetch('https://api.cloudinary.com/v1_1/dfue7hk4j/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                // Save to Firebase
+                await db.collection("products").add({
+                    name: document.getElementById('p-name').value,
+                    price: document.getElementById('p-price').value,
+                    category: document.getElementById('p-category').value,
+                    imageUrl: data.secure_url,
+                    createdAt: new Date()
+                });
+
+                alert("Product live on store!");
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Upload failed. Check console.");
+                btn.innerText = "TRY AGAIN";
+                btn.disabled = false;
+            }
         };
     </script>
 </body>
